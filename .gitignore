@@ -1,0 +1,49 @@
+# Erlang
+_build/
+.rebar3/
+*.beam
+erl_crash.dump
+
+# Rust
+target/
+Cargo.lock.bak
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.poetry/
+dist/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+.turbo/
+
+# Data
+data/
+*.parquet
+!data/.gitkeep
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.so
+*.dll
+*.dylib

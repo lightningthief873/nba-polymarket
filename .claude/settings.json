@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(make *)",
+      "Bash(rebar3 *)",
+      "Bash(cargo *)",
+      "Bash(poetry *)",
+      "Bash(docker *)",
+      "Bash(docker-compose *)",
+      "Bash(kubectl *)",
+      "Bash(helm *)",
+      "Bash(buf *)",
+      "Bash(protoc *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(find *)",
+      "Bash(pwd)",
+      "Bash(echo *)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "Edit",
+      "Write",
+      "MultiEdit"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)",
+      "Bash(git reset --hard *)",
+      "Bash(curl * | bash)",
+      "Bash(curl * | sh)"
+    ]
+  },
+  "env": {
+    "ERL_FLAGS": "+P 1048576 +Q 65536",
+    "RUST_BACKTRACE": "1"
+  }
+}

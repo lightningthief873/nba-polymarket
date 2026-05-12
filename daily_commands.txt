@@ -1,0 +1,19 @@
+# Start of day
+git checkout main && git pull
+git checkout -b phase1/day-3-zmq-wiring
+cat .claude/current_task.md   # remind yourself
+
+# During the day
+# code, test, commit small
+git add -p
+git commit -m "feat(core_bus): chumak subscriber on tcp/5555"
+
+# End of day
+make test                      # run full test suite
+# update .claude/current_task.md (last commit, next step, blockers)
+# update .claude/progress.md (flip the day to [x])
+git add .claude/
+git commit -m "chore(memory): update progress for day 3"
+git push -u origin phase1/day-3-zmq-wiring
+gh pr create --fill
+# wait for CI green, merge via web or `gh pr merge --squash`
