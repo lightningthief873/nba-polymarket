@@ -1,0 +1,9 @@
+{application, persistence,
+ [{description, "Persistence layer — QuestDB, Redis, Parquet"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {persistence_app, []}},
+  {applications, [kernel, stdlib, sasl, core_bus]},
+  {env, []},
+  {modules, []}
+ ]}.

@@ -1,0 +1,9 @@
+{application, execution,
+ [{description, "Order routing and execution"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {execution_app, []}},
+  {applications, [kernel, stdlib, sasl, core_bus]},
+  {env, []},
+  {modules, []}
+ ]}.
