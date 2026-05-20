@@ -71,7 +71,13 @@ jobs:
 
       - name: buf breaking (against main)
         if: github.event_name == 'pull_request'
-        run: buf breaking proto --against '.git#branch=main,subdir=proto'
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          if git show ${{ github.base_ref }}:proto/buf.yaml > /dev/null 2>&1; then
+            buf breaking proto --against ".git#branch=${{ github.base_ref }},subdir=proto"
+          else
+            echo "proto/buf.yaml not on ${{ github.base_ref }} yet — skipping breaking check"
+          fi
 
       - name: Rust fmt check
         run: |
