@@ -1,0 +1,9 @@
+{application, core_bus,
+ [{description, "Core event bus"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {core_bus_app, []}},
+  {applications, [kernel, stdlib, sasl]},
+  {env, []},
+  {modules, []}
+ ]}.

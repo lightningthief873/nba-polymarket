@@ -1,0 +1,21 @@
+[package]
+name = "core_bus"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "hello_nif"
+crate-type = ["cdylib"]
+
+# The `nif` feature gates rustler. Enable it for the cdylib NIF build.
+# Disable it (`--no-default-features`) for `cargo test` so the test binary
+# can link without needing the ERTS enif_* symbols.
+[features]
+default = ["nif"]
+nif = ["dep:rustler"]
+
+[dependencies]
+rustler = { version = "0.34", optional = true }
+
+[profile.release]
+opt-level = 3

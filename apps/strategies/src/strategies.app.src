@@ -1,0 +1,9 @@
+{application, strategies,
+ [{description, "Trading strategies"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {strategies_app, []}},
+  {applications, [kernel, stdlib, sasl, core_bus]},
+  {env, []},
+  {modules, []}
+ ]}.

@@ -3,6 +3,8 @@ _build/
 .rebar3/
 *.beam
 erl_crash.dump
+rebar3.crashdump
+.plt/
 
 # Rust
 target/

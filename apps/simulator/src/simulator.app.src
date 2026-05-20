@@ -1,0 +1,9 @@
+{application, simulator,
+ [{description, "First-class simulator — replay and synthetic modes"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {simulator_app, []}},
+  {applications, [kernel, stdlib, sasl, core_bus]},
+  {env, []},
+  {modules, []}
+ ]}.
