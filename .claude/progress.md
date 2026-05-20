@@ -10,7 +10,7 @@ Format: `- [ ] Day N: <task>` then flip to `- [x]` on completion.
 - [ ] Day 0: CI placeholder green, tooling smoke test
 
 ## Phase 1
-- [ ] Day 1: Erlang umbrella + Rustler hello-world
+- [x] Day 1: Erlang umbrella + Rustler hello-world
 - [ ] Day 2: Protobuf schemas + buf + codegen
 - [ ] Day 3: ZMQ wiring + mock publisher
 - [ ] Day 4: Event bus + market_state ETS
