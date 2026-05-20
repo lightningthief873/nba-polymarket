@@ -1,0 +1,13 @@
+version: v2
+# Erlang codegen via gpb local plugin.
+# Requires protoc-gen-erlang from https://github.com/tomas-abrahamsson/gpb
+# in PATH.  In this project the canonical path is:
+#   _build/default/lib/gpb/bin/protoc-gen-erlang
+# Actual generation is handled by rebar3_gpb_plugin (see rebar.config).
+plugins:
+  - local: protoc-gen-erlang
+    out: ../apps/core_bus/src/generated
+    opt:
+      - maps
+      - type_specs
+      - module_name_suffix=_pb

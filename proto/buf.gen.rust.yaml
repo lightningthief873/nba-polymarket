@@ -1,0 +1,7 @@
+version: v2
+# Rust codegen via prost (buf remote plugin).
+# Actual generation uses build.rs in nifs/proto_codec/ (prost-build).
+# This file shows the equivalent buf-plugin configuration for reference.
+plugins:
+  - remote: buf.build/community/neoeinstein-prost
+    out: ../nifs/proto_codec/src/generated

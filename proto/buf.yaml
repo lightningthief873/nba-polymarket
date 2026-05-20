@@ -1,0 +1,10 @@
+version: v2
+name: buf.build/nba-polymarket/v1
+lint:
+  use:
+    - STANDARD
+  except:
+    - PACKAGE_VERSION_SUFFIX   # v1 suffix is in the directory, not repeated in package name
+breaking:
+  use:
+    - FILE

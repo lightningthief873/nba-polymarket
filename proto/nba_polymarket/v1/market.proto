@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package nba_polymarket.v1;
+
+import "nba_polymarket/v1/common.proto";
+
+option java_package = "com.nba_polymarket.v1";
+option java_outer_classname = "MarketProto";
+option java_multiple_files = true;
+
+enum Side {
+  SIDE_UNSPECIFIED = 0;
+  SIDE_BUY = 1;
+  SIDE_SELL = 2;
+}
+
+message PriceLevel {
+  double price = 1;
+  double size = 2;
+}
+
+message MarketEvent {
+  EventMetadata meta = 1;
+  string condition_id = 2;
+  string token_id = 3;
+  repeated PriceLevel bids = 4;
+  repeated PriceLevel asks = 5;
+  double last_trade_price = 6;
+  double last_trade_size = 7;
+}
