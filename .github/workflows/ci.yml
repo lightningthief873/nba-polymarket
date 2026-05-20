@@ -9,16 +9,17 @@ on:
 env:
   ERLANG_VERSION: "27.1.2"
   REBAR3_VERSION: "3.24.0"
-
-# Python, proto-lint, and integration jobs are added in later phases.
+  BUF_VERSION: "1.45.0"
 
 jobs:
   erlang-rust:
-    name: Build & Test (Erlang + Rust NIF)
+    name: Build & Test (Erlang + Rust + Python)
     runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Erlang/OTP + rebar3
         uses: erlef/setup-beam@v1
@@ -30,6 +31,24 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python proto tools
+        run: pip3 install grpcio-tools protobuf
+
+      - name: Install protoc
+        run: sudo apt-get install -y protobuf-compiler
+
+      - name: Install buf
+        run: |
+          curl -sSL \
+            "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-x86_64" \
+            -o /usr/local/bin/buf
+          chmod +x /usr/local/bin/buf
 
       - name: Cache rebar3 deps
         uses: actions/cache@v4
@@ -44,16 +63,34 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: cargo-${{ runner.os }}-${{ hashFiles('nifs/hello/Cargo.toml') }}
+          key: cargo-${{ runner.os }}-${{ hashFiles('nifs/hello/Cargo.toml', 'nifs/proto_codec/Cargo.toml') }}
           restore-keys: cargo-${{ runner.os }}-
 
+      - name: buf lint
+        run: buf lint proto
+
+      - name: buf breaking (against main)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+          if git show ${{ github.base_ref }}:proto/buf.yaml > /dev/null 2>&1; then
+            buf breaking proto --against ".git#branch=${{ github.base_ref }},subdir=proto"
+          else
+            echo "proto/buf.yaml not on ${{ github.base_ref }} yet — skipping breaking check"
+          fi
+
       - name: Rust fmt check
-        run: cargo fmt --manifest-path nifs/hello/Cargo.toml -- --check
+        run: |
+          cargo fmt --manifest-path nifs/hello/Cargo.toml -- --check
+          cargo fmt --manifest-path nifs/proto_codec/Cargo.toml -- --check
 
       - name: Rust clippy
-        run: cargo clippy --manifest-path nifs/hello/Cargo.toml -- -D warnings
+        run: |
+          cargo clippy --manifest-path nifs/hello/Cargo.toml -- -D warnings
+          cargo clippy --manifest-path nifs/proto_codec/Cargo.toml \
+            --no-default-features -- -D warnings
 
-      - name: Build (NIF + Erlang)
+      - name: Build (NIF + proto_codec + Erlang)
         run: make build
 
       - name: Test

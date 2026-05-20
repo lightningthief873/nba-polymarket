@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package nba_polymarket.v1;
+
+import "nba_polymarket/v1/common.proto";
+
+option java_package = "com.nba_polymarket.v1";
+option java_outer_classname = "SignalProto";
+option java_multiple_files = true;
+
+enum SignalAction {
+  SIGNAL_ACTION_UNSPECIFIED = 0;
+  SIGNAL_ACTION_BUY = 1;
+  SIGNAL_ACTION_SELL = 2;
+  SIGNAL_ACTION_CLOSE = 3;
+  SIGNAL_ACTION_HOLD = 4;
+}
+
+message Signal {
+  EventMetadata meta = 1;
+  string strategy_id = 2;
+  string condition_id = 3;
+  string token_id = 4;
+  SignalAction action = 5;
+  double target_price = 6;
+  double size = 7;
+  double confidence = 8;
+  string reason = 9;
+}

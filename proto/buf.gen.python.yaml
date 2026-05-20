@@ -1,0 +1,8 @@
+version: v2
+# Python codegen via buf remote plugin (requires buf BSR access).
+# Fallback: python3 -m grpc_tools.protoc (see Makefile proto target).
+plugins:
+  - remote: buf.build/protocolbuffers/python
+    out: ../adapters/proto
+  - remote: buf.build/protocolbuffers/pyi
+    out: ../adapters/proto

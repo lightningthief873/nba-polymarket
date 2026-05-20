@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package nba_polymarket.v1;
+
+import "nba_polymarket/v1/common.proto";
+
+option java_package = "com.nba_polymarket.v1";
+option java_outer_classname = "GameProto";
+option java_multiple_files = true;
+
+enum GamePhase {
+  GAME_PHASE_UNSPECIFIED = 0;
+  GAME_PHASE_PRE_GAME = 1;
+  GAME_PHASE_IN_PROGRESS = 2;
+  GAME_PHASE_HALFTIME = 3;
+  GAME_PHASE_QUARTER_BREAK = 4;
+  GAME_PHASE_FINAL = 5;
+}
+
+message GameEvent {
+  EventMetadata meta = 1;
+  string game_id = 2;
+  string home_team = 3;
+  string away_team = 4;
+  int32 home_score = 5;
+  int32 away_score = 6;
+  int32 period = 7;
+  int32 game_clock_ms = 8;
+  GamePhase phase = 9;
+  string possession_team = 10;
+}

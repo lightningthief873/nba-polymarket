@@ -1,0 +1,26 @@
+[package]
+name = "proto_codec"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "proto_codec_nif"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "proto_roundtrip"
+path = "src/bin/proto_roundtrip.rs"
+
+[features]
+default = ["nif"]
+nif = ["dep:rustler"]
+
+[dependencies]
+prost = "0.13"
+rustler = { version = "0.34", optional = true }
+
+[build-dependencies]
+prost-build = "0.13"
+
+[profile.release]
+opt-level = 3
