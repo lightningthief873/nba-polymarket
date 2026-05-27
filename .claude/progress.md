@@ -12,7 +12,7 @@ Format: `- [ ] Day N: <task>` then flip to `- [x]` on completion.
 ## Phase 1
 - [x] Day 1: Erlang umbrella + Rustler hello-world
 - [x] Day 2: Protobuf schemas + buf + codegen
-- [ ] Day 3: ZMQ wiring + mock publisher
+- [x] Day 3: ZMQ wiring + mock publisher
 - [ ] Day 4: Event bus + market_state ETS
 - [ ] Day 5: strategy_behaviour + always_buy_at_30c
 - [ ] Day 6: order_router + paper_executor + kill_switch

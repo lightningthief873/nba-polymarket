@@ -1,48 +1,54 @@
 # Current task
 
-Last updated: 2026-05-20 (Day 2 complete)
-Last commit: 379ee93 chore: update Makefile and CI for Day 2 proto targets
-Branch: phase1/day-2-protobuf
+Last updated: 2026-05-27 (Day 3 complete)
+Last commit: pending
+Branch: phase1/day-3-zmq-wiring
 
 ## Phase: 1
-## Day: 2 (DONE — pending PR merge)
+## Day: 3 (DONE — pending PR merge)
 
 ## What we are doing right now
-Day 2 complete. PR to open, waiting for CI green then merge.
+Day 3 complete. All tests green. PR to open.
 
 ## Done this session
-- 5 proto3 schemas: common, market, game, signal, order
-  - All enum values SCREAMING_SNAKE_CASE-prefixed (buf STANDARD + proto3 scoping)
-- buf lint config (STANDARD, except PACKAGE_VERSION_SUFFIX)
-- buf breaking config (FILE mode)
-- Erlang codegen: tools/gpb_compile.escript → apps/core_bus/src/generated/*_pb.erl
-  - rebar3_gpb_plugin path resolution broken for external protos; escript bypasses it
-- Rust codegen: nifs/proto_codec/ crate with prost-build → nba_polymarket.v1.rs
-  - Both cdylib (future NIF) + rlib + proto_roundtrip binary
-- Python codegen: adapters/proto/nba_polymarket/v1/*_pb2.py via grpcio-tools
-- CT test: proto_roundtrip_SUITE — Erlang encodes, Python + Rust round-trip, bytes identical
-- Makefile: proto, proto-lint, proto-python, proto-erlang targets; proto_codec in test/clean
-- CI: Python 3.12, grpcio-tools, buf install, buf lint/breaking, proto_codec clippy/fmt
+- rebar.config: added chumak 1.5.0, gproc 1.2.0 deps; proper 1.4.0 in test profile
+- apps/core_bus/src/event_bus.erl: gproc-backed pub/sub wrapper (subscribe/publish/metrics)
+- apps/core_bus/src/ingest_subscriber.erl: gen_server SUB socket; spawns recv_loop, decodes protobuf
+  frames, publishes via event_bus, maintains p50/p99 latency histogram
+- apps/core_bus/src/core_bus_sup.erl: added ingest_subscriber as permanent child
+- apps/core_bus/src/core_bus.app.src: gproc/chumak in applications, zmq_host/port env
+- adapters/mock_publisher/publisher.py: Publisher class; builds MarketEvent protos at configurable rate
+- adapters/mock_publisher/main.py: CLI (--rate, --duration, --seed, --bind)
+- adapters/mock_publisher/tests/test_publisher.py: proto roundtrip + rate accuracy tests
+- apps/core_bus/test/event_bus_prop.erl: PropEr 100-test pub/sub invariant
+- apps/core_bus/test/ingest_subscriber_SUITE.erl: 11-second ZMQ throughput/latency CT test
+- .github/workflows/ci.yml: pyzmq + pytest in pip install
+- Makefile: mock-publish, ingest-shell targets; pytest in test target
+
+## Bug fixed
+- ingest_subscriber:init/1 used `spawn_link(fun() -> recv_loop(Socket, self()) end)` where
+  `self()` evaluates in the SPAWNED process context (the recv_loop itself), so all
+  gen_server:cast calls went to the wrong process. Fixed by capturing `Self = self()` before
+  the spawn_link call.
 
 ## Acceptance gate verified
-- make build: exit 0
-- rebar3 ct: 3/3 green (hello_nif×2 + proto_roundtrip×1)
-- cargo test (hello + proto_codec): all pass
-- cargo clippy proto_codec --no-default-features: no warnings
-- cargo fmt: clean
+- make test: all pass
+- CT: recv=10973, errors=0, p50=172µs, p99=580µs (all thresholds met)
+- PropEr event_bus: 100/100 passed
+- Python tests: 4/4 passed
+- Rust tests: passing
 
 ## Next concrete step
-Day 3: ZMQ wiring + mock publisher
-Branch: phase1/day-3-zmq
+Day 4: Event bus + market_state ETS table
+Branch: phase1/day-4-market-state
 
 ## Blockers
 None.
 
 ## Notes for next session
-- rebar3_gpb_plugin silently skips proto files outside app dir even with ../../ paths.
-  Always use tools/gpb_compile.escript for proto regeneration.
-- proto_roundtrip binary needs spawn_executable with a full path; use os:find_executable/1
-  in CT tests (spawn_executable does not search PATH).
-- Rust crate crate-type = ["cdylib", "rlib"] required so binaries can link against the lib.
-- Generated Erlang API: market_pb:encode_msg(Map, market_event) / decode_msg(Bin, market_event)
-  Enum atoms: 'SOURCE_POLYMARKET_WS', 'SIDE_BUY', etc. (all prefixed, quoted atoms).
+- chumak:socket(sub) without identity uses start_link NOT under chumak_sup — plain gen_server
+- chumak:subscribe is gen_server:cast (async); process CAST before CALL ensures subscription
+  is in topics list before peer_ready is triggered
+- RECONNECT_TIMEOUT in chumak = 2000ms; start Python publisher BEFORE core_bus to avoid
+  losing messages in the reconnect window
+- BrokenPipeError at end of CT test is expected (publisher runs past port_close)

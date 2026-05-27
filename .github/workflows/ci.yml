@@ -37,8 +37,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install Python proto tools
-        run: pip3 install grpcio-tools protobuf
+      - name: Install Python dependencies
+        run: pip3 install grpcio-tools protobuf pyzmq pytest
 
       - name: Install protoc
         run: sudo apt-get install -y protobuf-compiler
