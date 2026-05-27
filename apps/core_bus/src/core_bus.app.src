@@ -1,9 +1,12 @@
 {application, core_bus,
  [{description, "Core event bus"},
   {vsn, "0.1.0"},
-  {registered, []},
+  {registered, [ingest_subscriber]},
   {mod, {core_bus_app, []}},
-  {applications, [kernel, stdlib, sasl]},
-  {env, []},
+  {applications, [kernel, stdlib, sasl, gproc, chumak]},
+  {env, [
+      {zmq_host, "127.0.0.1"},
+      {zmq_port, 5555}
+  ]},
   {modules, []}
  ]}.

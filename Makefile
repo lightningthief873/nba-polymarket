@@ -6,7 +6,7 @@ NIF_SRC         := nifs/hello/target/release/libhello_nif.so
 NIF_DST         := apps/core_bus/priv/hello_nif.so
 ROUNDTRIP_BIN   := nifs/proto_codec/target/debug/proto_roundtrip
 
-.PHONY: setup proto build test bench clean shell
+.PHONY: setup proto build test bench clean shell mock-publish ingest-shell
 
 setup:
 	asdf install
@@ -14,6 +14,7 @@ setup:
 	cargo fetch --manifest-path nifs/hello/Cargo.toml
 	cargo fetch --manifest-path nifs/proto_codec/Cargo.toml
 	pip3 install --quiet grpcio-tools protobuf
+	pip3 install --quiet -r adapters/mock_publisher/requirements.txt
 
 # Lint proto files with buf.
 proto-lint:
@@ -61,6 +62,16 @@ test: build
 	rebar3 proper || true
 	cargo test --manifest-path nifs/hello/Cargo.toml --no-default-features
 	cargo test --manifest-path nifs/proto_codec/Cargo.toml --no-default-features
+	python3 -m pytest adapters/mock_publisher/tests/ -v
+
+## Run the mock publisher for 30s at 1000 evt/sec (manual smoke test).
+mock-publish:
+	python3 adapters/mock_publisher/main.py \
+	    --rate 1000 --duration 30 --seed 42
+
+## Start rebar3 shell with core_bus (and therefore ingest_subscriber) running.
+ingest-shell: build
+	rebar3 shell --apps core_bus
 
 bench:
 	@echo "Benchmarks deferred to Day 13"
