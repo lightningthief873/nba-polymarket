@@ -1,7 +1,7 @@
 {application, core_bus,
  [{description, "Core event bus"},
   {vsn, "0.1.0"},
-  {registered, [ingest_subscriber]},
+  {registered, [market_state, game_state, ingest_subscriber]},
   {mod, {core_bus_app, []}},
   {applications, [kernel, stdlib, sasl, gproc, chumak]},
   {env, [
