@@ -14,7 +14,7 @@ Format: `- [ ] Day N: <task>` then flip to `- [x]` on completion.
 - [x] Day 2: Protobuf schemas + buf + codegen
 - [x] Day 3: ZMQ wiring + mock publisher
 - [x] Day 4: Event bus + market_state ETS
-- [ ] Day 5: strategy_behaviour + always_buy_at_30c
+- [x] Day 5: strategy_behaviour + always_buy_at_30c
 - [ ] Day 6: order_router + paper_executor + kill_switch
 - [ ] Day 7: QuestDB + Redis + persistence layer
 - [ ] Day 8: Polymarket adapters (read-only)

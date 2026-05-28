@@ -1,65 +1,71 @@
 # Current task
 
-Last updated: 2026-05-28 (Day 4 complete)
+Last updated: 2026-05-28 (Day 5 complete)
 Last commit: pending
-Branch: phase1/day-4-market-state
+Branch: phase1/day-5-strategy-behaviour
 
 ## Phase: 1
-## Day: 4 (DONE — pending commit)
+## Day: 5 (DONE — pending commit)
 
 ## What we are doing right now
-Day 4 complete. All tests green. Ready to commit.
+Day 5 complete. All tests green. Ready to commit.
 
 ## Done this session
-- apps/core_bus/src/market_state.erl: gen_server with ETS backing (named_table, public,
-  read_concurrency+write_concurrency); API: get_book/2, get_top/2, get_mid/2, get_all/2,
-  subscribe_changes/2, all_rows/0, sync/0 (30s timeout); 60s rolling window for vol + volatility
-- apps/core_bus/src/game_state.erl: gen_server with ETS backing; tracks score_diff,
-  time_remaining_ms, late_game_flag (Q4 ≤ 2min), update_count; API: get_game/1,
-  get_clock/1, get_score/1, all_games/0, sync/0
-- apps/core_bus/src/inspect.erl: shell helper — inspect:dump/0, dump_market/0, dump_games/0
-- apps/core_bus/src/core_bus_sup.erl: added market_state + game_state as permanent children
-  (before ingest_subscriber in start order)
-- apps/core_bus/src/core_bus.app.src: market_state, game_state added to registered
-- apps/core_bus/test/market_state_prop.erl: PropEr 100-test property — naive replay matches
-  ETS state for best_bid, best_ask, mid, update_count
-- apps/core_bus/test/market_state_concurrent_SUITE.erl: CT suite with 3 tests:
-  no_load_latency (p99 < 10µs), under_load_latency (p99 < 500µs under 20 readers + writer),
-  concurrent_rw (no torn reads, all events processed after sync)
-
-## Bugs fixed (all in CT test infrastructure)
-1. market_state:start_link() called from init_per_suite caused the gen_server to die when the
-   CT process exited — gen_server records its parent and terminates on parent exit even with
-   trap_exit. Fix: added start/0 (gen_server:start, unlinked) to both market_state and game_state;
-   test uses start/0 instead of start_link/0.
-2. ETS write starvation: 20 tight-loop readers (after 0) held the ETS read lock continuously,
-   blocking market_state's ets:insert. Result: 20k publishes took 197 seconds. Fix: changed
-   reader_loop to after 1 (1ms sleep), reducing read rate to ~1000 reads/reader/sec and allowing
-   writes to proceed normally.
-3. Process leak on test failure: spawn/spawn_monitor left writer and readers alive after test
-   case exited with writer_timeout, flooding the next test's market_state mailbox. Fix: writer
-   uses spawn_link; readers use spawn_opt([link, monitor]).
-4. sync() default 5s timeout too short for 20k events under load. Fix: sync() now uses 30_000ms.
+- apps/strategies/src/strategy_behaviour.erl: behaviour module with 5 callbacks:
+  init/1, on_market_event/2, on_game_event/2, on_clock_tick/2, terminate/2
+- apps/strategies/src/strategy_runtime.erl: gen_server wrapper; subscribes to
+  market+game events; 100ms clock_tick via send_after; emits signals via
+  event_bus:publish(signal, Sig#{strategy_id => SId}); ETS self-registration;
+  exposes sync/1 and get_info/1 for tests
+- apps/strategies/src/strategy_supervisor.erl: simple_one_for_one supervisor;
+  creates strategy_registry ETS in init/1; API: add_strategy/3, remove_strategy/1,
+  list_strategies/0, get_strategy_state/1; transient restart, intensity=10/period=60
+- apps/strategies/src/strategies/always_buy_at_30c.erl: first strategy; emits
+  BUY signal when best_ask <= 0.30 and time gap >= min_gap_ms (default 5s);
+  accepts #{min_gap_ms => 0} in init args for deterministic tests
+- apps/strategies/src/signal_aggregator.erl: gen_server; subscribes to signal
+  events; logs each signal; exposes metrics/0 and sync/0
+- apps/strategies/src/strategies_sup.erl: root supervisor wiring signal_aggregator
+  (worker) and strategy_supervisor (supervisor) under one_for_one
+- apps/strategies/src/strategies.app.src: added gproc dep, registered names
+- apps/core_bus/src/inspect.erl: added strategies/0 via dynamic dispatch to
+  strategy_supervisor:list_strategies/0 (avoids circular dep at compile time)
+- Makefile: explicit --module list for rebar3 proper
+- apps/strategies/test/strategy_supervisor_SUITE.erl: 3 CT tests —
+  spawn_many_kill_one (50 instances, kill one, verify restart + others unchanged),
+  hot_add_remove (add, signal fires, remove, no signal after), determinism
+  (1000 events via runtime, two runs produce same count, with min_gap_ms=0)
+- apps/strategies/test/strategy_behaviour_prop.erl: 2 PropEr properties —
+  prop_deterministic_dispatch (same events → same signals every run),
+  prop_state_isolation (two instances with same input produce identical output)
 
 ## Acceptance gate verified
-- make test: all 7 CT tests + PropEr 100/100 + Python 4/4 + Rust passing
-- no_load p99 < 10µs ✓
-- under_load p99 < 500µs (measured ~184µs) ✓
-- concurrent_rw: 0 torn reads, all 20k events processed ✓
-- PropEr: 100/100 passes
+- make test: 10/10 CT tests + PropEr 4/4 (including 2 new) + Python 4/4 + Rust passing
+- spawn_many_kill_one: kill one of 50, supervisor restarts it, 49 others unchanged ✓
+- hot_add_remove: signal fires after add, process gone after remove, no signal after ✓
+- determinism: min_gap_ms=0, 500/1000 events qualify, both runs count=500 ✓
+- PropEr 100/100 each for prop_deterministic_dispatch and prop_state_isolation ✓
+- Manual: inspect:strategies() prints table, strategy_supervisor:list_strategies() works ✓
+
+## Architecture notes
+- Guardian process pattern in CT init_per_suite: supervisor:start_link only
+  exists (no non-linking version), so we spawn a guardian process (not linked
+  to CT runner) that calls start_link. Guardian stays alive between test cases.
+- ETS strategy_registry owned by strategy_supervisor process; destroyed on
+  supervisor exit; new strategies overwrite stale entries on restart (self-healing)
+- Signals emitted by strategy_runtime via event_bus:publish(signal, Map) with
+  strategy_id injected by the runtime (behaviour modules don't know their own ID)
+- always_buy_at_30c accepts min_gap_ms => 0 in init args to disable the 5s
+  rate-limit for deterministic tests; production default is 5000ms
 
 ## Next concrete step
-Day 5: strategy_behaviour + always_buy_at_30c
-Branch: phase1/day-5-strategy-behaviour
+Day 6: order_router + paper_executor + kill_switch
+Branch: phase1/day-6-order-router
 
 ## Blockers
 None.
 
-## Notes for next session
-- market_state and game_state expose both start_link/0 (for supervised use) and start/0
-  (for unlinked/test use) — start/0 is intentional, not a mistake
-- ETS with {write_concurrency, true} still serializes on same-bucket operations; under
-  heavy concurrent read+write on the same key, reads starve writes without a small yield
-- sync() uses 30_000ms timeout; event_bus:publish is fire-and-forget so sync is needed
-  to drain market_state's mailbox before asserting ETS state in tests
-- inspect:dump/0 is useful for rebar3 shell debugging (ingest-shell target)
+## Known flakiness
+- ingest_subscriber_SUITE zmq_throughput_latency: occasionally measures p50>2ms
+  under full-suite load (scheduler contention in WSL2). Passes when run alone.
+  Not caused by Day 5 code. Logged in known_issues.md.
