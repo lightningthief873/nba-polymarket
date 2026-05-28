@@ -1,0 +1,71 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%
+%% CLI for the running nba_polymarket node.
+%% Usage:
+%%   bin/cli status
+%%   bin/cli positions [strategy_id]
+%%   bin/cli killswitch on | off
+%%   bin/cli orders open
+%%
+%% Set NBA_NODE env var to override the default node name.
+%% The running node must have been started with --sname nba_polymarket
+%% or --name nba_polymarket@<host>.
+
+main(["status"]) ->
+    rpc_call(inspect, execution_status, []);
+main(["positions"]) ->
+    rpc_call(inspect, positions, []);
+main(["positions", StrategyId]) ->
+    rpc_call(inspect, positions, [list_to_binary(StrategyId)]);
+main(["killswitch", "on"]) ->
+    rpc_call(inspect, killswitch, [on]);
+main(["killswitch", "off"]) ->
+    rpc_call(inspect, killswitch, [off]);
+main(["orders", "open"]) ->
+    rpc_call(inspect, open_orders, []);
+main(_) ->
+    usage().
+
+rpc_call(Mod, Fun, Args) ->
+    Node = target_node(),
+    case net_kernel:start(['cli_tmp@127.0.0.1', longnames]) of
+        {ok, _} -> ok;
+        {error, {already_started, _}} -> ok;
+        {error, Reason} ->
+            io:format("Could not start net_kernel: ~p~n", [Reason]),
+            halt(1)
+    end,
+    erlang:set_cookie(Node, nba_polymarket),
+    case net_adm:ping(Node) of
+        pong ->
+            case rpc:call(Node, Mod, Fun, Args) of
+                {badrpc, Err} ->
+                    io:format("RPC error: ~p~n", [Err]),
+                    halt(1);
+                _Result ->
+                    ok
+            end;
+        pang ->
+            io:format("Cannot reach node ~p. Start the shell with:~n", [Node]),
+            io:format("  rebar3 shell --sname nba_polymarket~n"),
+            halt(1)
+    end.
+
+target_node() ->
+    case os:getenv("NBA_NODE") of
+        false -> 'nba_polymarket@127.0.0.1';
+        Name  -> list_to_atom(Name)
+    end.
+
+usage() ->
+    io:format("Usage: bin/cli <command>~n~n"),
+    io:format("Commands:~n"),
+    io:format("  status                  kill switch, rate tokens, open orders~n"),
+    io:format("  positions               all positions (global total)~n"),
+    io:format("  positions <strategy_id> positions for one strategy~n"),
+    io:format("  killswitch on           arm kill switch (resume trading)~n"),
+    io:format("  killswitch off          disarm kill switch (halt all orders)~n"),
+    io:format("  orders open             list open GTC orders~n~n"),
+    io:format("Set NBA_NODE env var to override default node name.~n"),
+    halt(1).
