@@ -1,9 +1,9 @@
 {application, strategies,
  [{description, "Trading strategies"},
   {vsn, "0.1.0"},
-  {registered, []},
+  {registered, [strategies_sup, strategy_supervisor, signal_aggregator]},
   {mod, {strategies_app, []}},
-  {applications, [kernel, stdlib, sasl, core_bus]},
+  {applications, [kernel, stdlib, sasl, gproc, core_bus]},
   {env, []},
   {modules, []}
  ]}.

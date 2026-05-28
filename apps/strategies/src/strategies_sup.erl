@@ -9,4 +9,14 @@ start_link() ->
 
 init([]) ->
     SupFlags = #{strategy => one_for_one, intensity => 1, period => 5},
-    {ok, {SupFlags, []}}.
+    Children = [
+        #{id      => signal_aggregator,
+          start   => {signal_aggregator, start_link, []},
+          restart => permanent,
+          type    => worker},
+        #{id      => strategy_supervisor,
+          start   => {strategy_supervisor, start_link, []},
+          restart => permanent,
+          type    => supervisor}
+    ],
+    {ok, {SupFlags, Children}}.

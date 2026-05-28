@@ -1,5 +1,5 @@
 -module(inspect).
--export([dump/0, dump_market/0, dump_games/0]).
+-export([dump/0, dump_market/0, dump_games/0, strategies/0]).
 
 %% Quick summary of all live state — call from rebar3 shell.
 
@@ -47,6 +47,23 @@ dump_games() ->
     end, lists:sort(fun(A, B) ->
         maps:get(game_id, A) =< maps:get(game_id, B)
     end, Games)).
+
+%% Dynamic dispatch avoids a compile-time circular dep (core_bus ← strategies).
+strategies() ->
+    case erlang:function_exported(strategy_supervisor, list_strategies, 0) of
+        false ->
+            io:format("strategies app not running~n");
+        true ->
+            Rows = strategy_supervisor:list_strategies(),
+            io:format("~n=== STRATEGIES (~w running) ===~n", [length(Rows)]),
+            io:format("~-24s ~-30s ~-14s ~s~n",
+                      ["StrategyId", "Module", "Pid", "Status"]),
+            io:format("~s~n", [lists:duplicate(80, $-)]),
+            lists:foreach(fun({SId, Mod, Pid, Status}) ->
+                io:format("~-24s ~-30w ~-14w ~w~n",
+                          [trunc_bin(SId, 24), Mod, Pid, Status])
+            end, lists:sort(fun({A,_,_,_},{B,_,_,_}) -> A =< B end, Rows))
+    end.
 
 trunc_bin(B, Max) when is_binary(B), byte_size(B) =< Max ->
     binary_to_list(B);
