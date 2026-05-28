@@ -1,9 +1,10 @@
 {application, execution,
  [{description, "Order routing and execution"},
   {vsn, "0.1.0"},
-  {registered, []},
+  {registered, [execution_sup, rate_limiter, position_tracker,
+                order_router, paper_executor]},
   {mod, {execution_app, []}},
-  {applications, [kernel, stdlib, sasl, core_bus]},
+  {applications, [kernel, stdlib, sasl, crypto, gproc, core_bus]},
   {env, []},
   {modules, []}
  ]}.
