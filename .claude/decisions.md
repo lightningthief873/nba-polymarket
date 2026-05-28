@@ -45,3 +45,17 @@ Context: Real money risk. No Polymarket testnet exists.
 Decision: Paper executor for all of Phase 1 and Phase 2. Real orders gated
 behind explicit operator action on Day 50.
 Consequences: Slower to first dollar earned, much lower risk of catastrophic bug.
+
+## ADR-007: strategy_supervisor uses transient restart with simple_one_for_one
+Date: Phase 1, Day 5
+Context: Strategies can fail (bad data, logic bugs). We want bounded restarts,
+not infinite loops. A strategy that exits normally (e.g., self-terminates on
+{stop, normal}) should not be restarted. A strategy that crashes should get
+a few retries before the supervisor gives up.
+Decision: strategy_supervisor is simple_one_for_one; child restart = transient
+(crash -> restart; normal/shutdown -> done). intensity=10, period=60 gives 10
+crash-restarts per minute before the supervisor itself shuts down.
+Consequences: A strategy that crashes 10 times/minute will bring down
+strategy_supervisor (and all strategies). Per-strategy sub-supervisors would
+give finer isolation but are deferred to Phase 2. In practice, buggy strategies
+should be removed via remove_strategy/1 rather than left to crash-loop.

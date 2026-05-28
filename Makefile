@@ -59,7 +59,7 @@ build: $(NIF_DST) $(ROUNDTRIP_BIN)
 test: build
 	rebar3 ct
 	rebar3 eunit
-	rebar3 proper || true
+	rebar3 proper --module event_bus_prop,market_state_prop,strategy_behaviour_prop || true
 	cargo test --manifest-path nifs/hello/Cargo.toml --no-default-features
 	cargo test --manifest-path nifs/proto_codec/Cargo.toml --no-default-features
 	python3 -m pytest adapters/mock_publisher/tests/ -v
