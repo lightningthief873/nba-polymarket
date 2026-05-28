@@ -85,10 +85,10 @@ sync() ->
 %% ---------------------------------------------------------------------------
 
 init([]) ->
-    ets:new(?TABLE, [named_table, set, public,
-                     {keypos, 2},
-                     {read_concurrency, true},
-                     {write_concurrency, true}]),
+    ?TABLE = ets:new(?TABLE, [named_table, set, public,
+                              {keypos, 2},
+                              {read_concurrency, true},
+                              {write_concurrency, true}]),
     ok = event_bus:subscribe(market),
     {ok, #{}}.
 
